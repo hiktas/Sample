@@ -1,0 +1,493 @@
+c++ 11
+1. all the stl containers are updatd to accept initializer list.
+   vector<int> v = {3,2,4,9}; // calling initializer list constructor
+   int arr[4] = {3,4,5,6};
+   // define your own initializer list constructor
+		   class bovec {
+			vector<int> vec;
+			public:
+			bovec(const initializer_list<int>& v)
+			{
+				for (initializer_list<int>::iterator itr = v.begin(); itr != v.end(); ++itr)
+					vec.push_back(*itr);
+			}
+		};
+	-> uniform initialization search order
+		1. initializer list constructor
+		2. regular constructor which takes proper params
+		3. Aggregate initializer
+		example :- 
+		dog d{3};
+			class dog {
+				int age;   // 3rd choice
+				public:
+				dog(int a){age = a;} // 2nd choice
+				dog(const initializer_list<int>& v)   // 1st choice
+				{
+					age = *(v.begin());
+				}
+			};
+	
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+2. auto type is introduced, less typing and use auto keyword in declaring variables.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.  in for loop we can use
+	for(auto i:v) // works on any class that has begin() and end()
+		cout<<i;
+	for(auto& i:v)
+		i++; //changes the values in v
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+4. nullptr is introduced for pointers along with old keyword NULL.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+5. "enum class" is introduced. earlier only "enum" was there. 
+	enum apple {red,green}; enum orange {big,small}; apple a = green; orange o=big; if(a==o) // this will work fine in c++ 03
+	// new c++ says
+	enum class apple {red,green}; enum class orange {big,small}; apple a = apple::green; orange o=orange::big; if(a==o) // this will nt compile because we havent define == in both classes.
+	apple and orange are classes now.
+	more strongtyped and more safe to used with new feature.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6. static assert
+	// runtime assert
+	assert(myp != NULL);
+	// compile time assert (c++11)
+	static_assert(sizeof(int) == 4);
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7. delegating constructor
+	class dog {
+	int age = 9; // in class, member intialization is also allowed and hence age gets intialized at every constructor.
+	public:
+	dog(){ ... }
+	dog(int a) : dog() { dootherthings();} // dog() has to be called first
+	};
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+8. override (for virtual funs)
+	virtual void a(float) override; //forexample it looks for this function in the parent class else throws compiler error
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+9. final ( for virtual funcs and for class)
+	class dog final{} // no class can derived from this 
+	class dog {virtual void a() final; // no class can override a() }
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+10. compiler generated default constructor
+	dog() = default; // inside class declaration write this, it will force compiler to generate default constructor
+	earlier this wll not happen if user has define their own constructor
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+11. delete
+	dog(double) = delete // this wll delete the function
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+12. constexpr
+	//example
+		constexpr int A(int a, int b, int c) { return a+b+c;} // // the funcs will b resolved at compile time if the passed arguments r const expressions else it wll be resolved at runtime.
+		int arr[A(10,10)+3]; //gets resolved at compile time, int arr[23].
+		//earlier this would hav given compiler error.
+		int input; cin>>input;
+		cout<<A(intput,9); // input is not a constexpr, hence it is resolved at runtime.
+		cout<<A(1,2,3+5); // gets resolved at compile time as all the args are constexpr expressions.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+13. new string literals
+    // unicode support
+	char *d = R"string \\"  // define raw string, this consider two \ as two not one because its being specified as R
+	char *a = u8"string";   // define a utf-8 string
+	char16_t* b = u"string" ;  //define a utf-16 string
+	char32_t* c = U"string";   // define a utf-32 string
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+14. lambda function
+		anonymous funcs
+		not as regular funcs
+		auto f = [](int x,int y){return x+y;};
+		cout<<f(3,4); // output = 7
+		//example
+		template<typename func>
+		void filter(func f, vector<int> v)
+		{
+			for (auto i : v)
+				if (f(i))
+					cout << i << " ";
+		}
+		vector<int> vx{ 1,2,3,4,5,6 };
+		filter([](int x) {return x > 3; }, vx); // output = 4,5,6
+		int y = 4;
+		filter([&](int x){ return x>y;}, vx); //  '&' tells it needs variable capture , here its 'y', wll giv output 5,6
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+15. rvalue reference is mainly used for ----
+
+	1. moving semantics
+
+	2. perfect forwarding
+
+ex:-
+
+	int a = 5; // a is lvalue
+
+	int& b = a; // b is lvalue reference
+
+	int&& c    // c is a rvalue reference(reference to a rvalue), this is represented by &&
+
+	printint(a); // call printint(int &i) func bcz a is lvalue, assume we have a func void printint(int& i) {}
+
+	printint(6); // call printint(int && i) func bcz 6 is rvalue, assume we have a func void printint(int&& i) {}
+
+	-> so we cn do func overloading with lvalue and rvalue reference. If  a function "printint(int i){}" is there then above code will not work as compiler dont know which func to call.
+
+ex:-
+
+	class myvec{
+
+		int size;
+
+		double *arr;
+
+		public:
+
+		myvec(const myvec& rhs) // expensive copy constructor which does deep copy
+
+		{
+
+			size = rhs.size; arr = new double[size];
+
+			for(int i=0;i<size;i++) arr[i] = rhs.arr[i];
+
+		}
+
+		myvec( myvec&& rhs) // inexpensive move constructor which does shallow copy
+
+		{
+
+			size = rhs.size; arr = rhs.arr;
+
+			rhs.arr=nullptr;
+
+		}
+
+		~myvec(){ delete arr;}
+
+	};
+
+	
+
+	void foo(myvec v);
+
+	myvec createvec();
+
+	main(){
+
+		myvec  v = createvec();
+
+		foo(v); // calls copy constructor, bcz v is lvalue
+
+		foo(createvec()); // calls move constructor, bcz createvec() is rvalue
+
+	}
+
+	
+
+	If we dont have rvalue reference and move constructor and we want to achieve the same kind of efficiency then ---
+
+	void foo_by_val(myvec v); // call foo_by_val(v);
+
+	void foo_by_ref(myvec &v); // call foo_by_ref(createvec());
+
+	foo_by_val should be renamed as foo() bcz it cn take rvalue as parameter and then it will call move constructor.
+
+	
+
+	in main() ------------
+
+	foo_by_ref(v); // calls no constructor, this is the most efficient
+
+	foo(v); // calls copy construtor
+
+	// lets say we dont want to make copy of v and pass to foo so we can do like--
+
+	foo(std::move(v)); // this wll move the object v to foo func using the move constructor. after this v object should not be used as it will be null and myvec destructor will be called.
+
+	// v is destroyed here 
+
+		
+
+	Note 1:  most useful place for rvalue reference is overloading copy constructor and assignement operators to achieve move semantics
+
+	Note 2: move is already there for all STL containers
+
+	deep copy can be avoided
+
+	they r powerful where passing by reference and passing by value both are used.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+16. Ravlue reference usage --
+	Perfect Forwarding
+	same example continued as above. myvec has both copy constructor and move constructor.
+	template<typename T>
+	void relay(T&& arg){ foo(std::forward<T>(arg));// argument forwarding}
+	int main(){
+	myvec reusable = createvec();
+	relay(reusable);//relay func cn be called wid lvalue 
+	relay(createvec()); // relay func cn be called wid rvalue also.
+	}
+	
+	// how relay func can forward argument to foo func
+	1. no constly and unncessary copy constrction of myvec is made;
+	2. argument type of relay should be same as that of foo.
+	   ---> rvalue is forwarded as rvalue and lvalue as lvalue. then its called perfect forwarding
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+17. Reference collapsing rules (compiler cn generate code like this and deduce it)
+	1. T&& --> T&
+	2. T& && --> T&
+	3. T&& & --> T&
+	4. T&& && --> T&&
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+18. remove_reference
+	standard library says ---
+	template <class T> struct remove_reference; // it removes reference
+	std::remove_reference<int>::type i; //same as int i
+	std::remove_reference<int&>::type i; // same as int i
+	http://www.cplusplus.com/reference/type_traits/remove_reference/
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+19. type&& is always rvalue reference???
+	No
+	if void relay(T&& arg ){}
+	here if arg is rvalue then its rvalue reference, if it is lvalue then it is lvalue refernce
+	
+	// ex:- T&& is initialized with rvalue => rvalue reference
+	relay(9); => T = int&& => T&& => int&& && = int && (by 17 rule)
+	// ex:- T&& is initialized with lvalue => lvalue reference
+	relay(x); => T = int& => T&& => int& && = int & (by 17 rule)
+	
+	Thats why it is called universal reference.
+	T&& is universal reference => rvalue, lvalue, const, non-const etc. only if these 2 conditions r met--
+	1. T is a template type.
+	2. type deduction(reference collapsing) happens to T.
+		-- T is a function template type, not a class template type.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+20. Implementation of std::forward---
+	template<class T>
+	T&& forward(typename remove_reference<T>::type& arg){
+		return static_cast<T&&>(arg);
+	}
+	this is how perfect forwarding is acheived.
+	https://stackoverflow.com/questions/8526598/how-does-stdforward-work
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+21. std::move vs std::forward
+	std::move<T>(arg); // turn arg to an rvalue type
+	std::forward<T>(arg); // turn arg to type of T&&
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+22. User defined literals ---
+	constexpr long double operator"" _cm(long double x) {return x*10;} // nothing at runtime, all unit compilation at compile time
+	// define as 
+	long double height = 3.4_cm; // returns 34
+	it behaves same as build-in literals.
+	//Restriction-- input parameters can only be follwing --
+	char const*
+	unsigned long long
+	long double
+	char const*, std::size_t
+	wchar_t const*, std::size_t
+	char16_t const*, std::size_t
+	char32_t const*, std::size_t
+	//Note- Return value can be of any type.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+23. Compiler generated funcs--
+	1. default construtor(generated only if no constrctor is declared by user)
+	2. copy constructor (generated only if 3,4,5,6 r not declared by user)
+	3. copy assignment operator (generated only if 2,4,5,6 r not declared by user)
+	4. destrctor
+	5. move construtor (generated only if 2,3,4,6 r not declared by user)
+	6. move assignment operator(generated only if 2,3,4,5 r not declared by user)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+24. Shared pointer---
+	provides a share ownership of the object
+	#include<memory>
+	void foo(){
+		shared_ptr<Dog> p(new Dog("Gunner")); // count = 1, Constructor of Dog class will be called.shared pointer is pointing to one Dog object, it will take care of deallocating the memory of object.
+		// 1. Gunner is created;   2. p is created // problm is if 1 is successful but 2 is not, then dog object is not managed and hence memory leak will happen
+		{
+			shared_ptr<Dog> p2 = p; // now d p object is shared with p2, count =2
+			p2->bark(); cout<<p.use_count(); // 2
+		}
+		// count = 1 because p2 is deletd as it goes out of the scope
+		p->bark();
+	} // count = 0, d memory is deallocated and object is deleted. Destructor of Dog class will be called.
+	
+	// An object should be assigned to a smart pointer as soon as it is created. Raw pointer should not be used again.
+	// Following is a wrong way of using smart pointers.
+	Dog *d = new Dog("Tank");
+	shared_ptr<Dog> p(d);
+	shared_ptr<Dog> p2(d);
+	// this is wrong bcz when p goes out of scope d will be deleted and p2 goes out of scope it wll also try to delete d but d is already deleted hence there will be error.
+	
+	// preferred way of creating shared pointer is --
+	shared_ptr<Dog> p= make_shared<Dog("Tank"); // faster and safer , exception safe code
+	// shared pointers can be used like regular pointers, dereferncing can also be used
+	(*p).bark();
+	
+	casting can be done with --- (just like normal pointers)
+	// static_pointer_cast
+	// dynamic_pointer_cast
+	// const_pointer_cast
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+25. Shared pointer 2---
+	shared_ptr<Dog> p1= make_shared<Dog>("Gunner");
+	shared_ptr<Dog> p2= make_shared<Dog>("Tank");
+	p1 = p2; // both r pointing to Tank object, hence Gunner is deleted. no shared pointer is pointer to Gunner.
+	p1 = nullptr ;// gunner is deleted
+	p1.reset(); // Gunner is deleted, reset d pointer to empty.
+	
+	// if we want to have a custom deleter then we should use shared_ptr constructor to create objects.
+	shared_ptr<Dog> p2= shared_ptr<Dog>(new Dog("Tank")
+		[](Dog *p){cout<<"custom deleting"; delete p;}
+	); // after scope is ended Tank is deleted with custom deleter and Gunner is deleted with default destructor.
+	
+	shared_ptr<Dog> p3(new Dog[3]); // p3 is only managing the 1st Dog object, so when out of scope 1st Dog is deleted and Dog[1] and Dog[2] are memory leaked.
+	shared_ptr<Dog> p4= shared_ptr<Dog>(new Dog[3], [] (Dog *p){delete[] p;}); // using this custom deleter all 3 objects r deleted when p4 goes out of scope.
+	
+	// another functionality
+	Dog *d = p1.get(); // returns the raw pointer, use this with extra care as d object is managed by shared pointer so it can be deleted once out of scope.
+	delete d; // delete Gunner object but when p1 goes out of scope Gunner wll be deleted again which is undefined behaviour.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+26. Weak pointer ---
+	has no ownership of the pointed object, not interfere with delteing that object
+	weak_ptr<Dog> m_Dfriend; // nobody cn perform operator delete on this pointer .. // Dog *m_Dfriend;
+	Weak pointer is not always valid, if the pointer which it is pointing to gets deleted then weak pointer become empty.
+	Ex:-
+	shared_ptr<Dog> m_Dfriend;  // problem is cyclic reference, here weak pointer should be used to resolve this issue as shown above.
+	void makefriend(shared_ptr<Dog> f){m_Dfriend = f;}
+	shared_ptr<Dog> p1(new Dog("Gunner"));
+	shared_ptr<Dog> p2(new Dog("Tank"));
+	p1->makefriend(p2);
+	p2->makefriend(p1);
+	// here p1 and p2 wont be deleted because there is cyclic reference due to makefriend(). hence here weak pointer should be used.
+	
+	it also provides safer access to the pointer.
+	Ex:-
+	// weak pointer cant be used like a regular pointer
+	void showfriend(){
+		if (!m_Dfriend.expired()) // if m_Dfriend is empty lock() will throw exception hence this check is needed.
+		cout << m_Dfriend.lock()->name; // lock will create a shared pointer out of the weak pointer.it checks if weak pointer is still pointing to a valid object and it ensures that 
+		// object is not deletd bcz if there is a shared pointer object will not be deleted.
+		m_Dfriend.use_count(); // will show how many shared pointers are owning this object.
+	}
+	
+	p1->showfriend(); // this will print Tank and count is 1 pointer.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+27. Unique pointer ---
+	exclusive ownership, one object can be owned by one unique pointer.And if the unique pointer goes out of scope or it starts to own another object then the original object will be
+	automatically deleted.
+	Light weight pointer, less expensive to use than shared pointer.So if not pointers are not shared then preferred to use unique pointer.
+	unique_ptr<Dog> p1(new Dog("Gunner"));
+	Dog *d = p1.release(); // get the raw pointer, p1 has release the ownership of this object and nobody owns the object now and it wont be deleted automatically.
+	// another example
+	p1.reset(new Dog("Tank")); // here Gunner object is destroyed and p1 owns Tank object.
+	p1.reset(); // same as p1=nullptr and here Gunner object is destroyed.
+	
+	// another example
+	unique_ptr<Dog> p2(new Dog("Tank"));
+	p2 = move(p1); // here Tank gets destroyed , p1 becomes empty and  p2 owns Gunner. So we have transferred ownership from one unique_ptr to another.
+	
+	// ex:-
+	void f(unique_ptr<Dog> p){
+		p->bark();
+	} // Gunner is destroyed here when p goes out of scope
+	
+	void test(){
+		unique_ptr<Dog> p1(new Dog("Gunner"));
+		f(move(p1)); // p1 becomes empty here and ownership of Gunner is moved to p pointer in f().
+	}
+	
+	// unique pointer is returned by value
+	unique_ptr<Dog> getdog(){
+		unique_ptr<Dog> p(new Dog("Tank"));
+		return p; // p is returned by value so p is no longer the owner of Tank.
+	}
+	
+	unique_ptr<Dog> pd = getdog(); // pd gets d ownership of Tank solely.
+	
+	// for delete we can use
+	unique_ptr<Dog[]> dogs(new Dog[3]); // all 3 dogs will be deleted once get out of scope, no custom deleter is needed
+	
+	// use unique_ptr if we r creating a new object inside a class constructor, so that if constuctor does not work properly , this unique_ptr object will be destroyed properly.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+28. https://www.youtube.com/watch?v=xtYJgPR9iCg&index=11&list=PL5jc9xFGsL8FWtnZBeTqZBbniyw0uHyaH
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+29. Regular expressions---
+	#include<regex>
+	string str; cin >> str;
+	regex e("abc", regex_constants::icase); // ignoring the case to match 
+	bool match = regex_match(str, e); // will return whther its matched with regex or not
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+30. Tuple --  stores group of data with different data types
+	#include<tuple>
+	tuple<int,string,char> t(32,"paul", 'a');
+	cout<<get<0>(t)<<endl; cout<<get<1>(t)<<endl; // get returns a reference
+	
+	string &s =get<1>(t); s="patience"; // changes t
+	
+	get<3>(t); // wont compile as its out of range
+	
+	int i = 1;
+	get<i>(t); // wont compile as i must be a compile time constant
+	
+	tuple<int,string,char> t2; // default constrctor
+	t2 =  make_tuple(12, "curious", 'p');
+	
+	if(t>t2){ // lexicographical comparision
+		cout<<"t is larger than t2"; // bcz 32 > 12
+		t = t2; // member by member copying
+	}
+	
+	Tuple stores reference
+	string st = "in for a penny"; tuple<string&> t3(st); or
+	t3 =  make_tuple(ref(st));
+	get<0>(t3) = "in for a pound"; // st contains "in for a pound"
+	
+	int x; string y; char z;
+	make_tuple(ref(x), ref(y), ref(z)) = t2; // so x, y, z will contain the corrsponding values
+	
+	// standard library provides a function which does the same thing as above
+	std::tie(x,y,z) = t2;
+	// if some value is nt needed, it can be ignored
+	std::tie(x, std::ignore, z) = t2;
+	
+	// tuple can be concatenated
+	auto t4 = std::tuple_cat(t2, t3); // t4 is a tuple<int, string, char, string>
+	
+	// type traits
+	std::tuple_size<decltype(t4)::value; // will print 4
+	std::tuple_element<1, decltype(t4)>::type d; // d is string
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+31. When to use tuple?
+	// tuple is conveneint for a one-time only structure to transfer a group of data frm a function (let say) so need of structure here
+	
+	// multi-index map
+	map<tuple <int,string,char>, string> m;
+	m[make_tuple(2,"dear",'f')] = "pottery";
+	
+	// multi index hashtable
+	unordered_map<tuple <int,string,char>, string> mhashtable;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+32. struct myvector{float x,y;};
+	// dese 2 funcs r equivalent
+	myvector getmyvec(){return myvector{2.5f,2.5f}};
+	myvector getmyvec2(){ return{2.5f,2.5f}; }
+	
+	Important --
+	auto x =5; // deduced as an int
+	auto x(5); // deduced as an int 
+	auto x{5}; // never use this syntax , misleading , x is deduced to be an std::initializer_list<int>
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+33. float x() const noexcept {return 4.2f };
+	// const is used for getter funcs, as dey r not goin to modify any member of its parent -  this allows to call them on 'const&' and '*const' parents.
+	//compilation error if you try to modify any member
+	// noexcept keyword allows the compiler to optimize the code and also mark the function that it will never throw an exception. If it throws an exception, then program will terminate.
+	Ex:- if we have --
+	const Ball& reftoball(...);
+	reftoball.x(); // as const&, we r only allowed to call const members on reftoball.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+34. using keyword
+	// typedef replacement
+	using frametime = float; // alias for float
+	using Integer = int; // same as typedef int Integer
+	EX:-
+	template<typename T> using Myvector = Vector2<T>;
+	Myvector<float> ;// same as Vector2<float>
+	or use like
+	using Myvectorfloat = Vector2<float>;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
